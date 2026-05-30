@@ -1,0 +1,166 @@
+// ==UserScript==
+// @name         Message Asist
+// @namespace    http://tampermonkey.net/
+// @version      0.4
+// @description  メッセージ送信確認画面のチェック補助
+// @author       Ameba Blog User
+// @match        https://msg.ameba.jp/ucs/received/detail*
+// @match        https://msg.ameba.jp/ucs/reply/index*
+// @match        https://msg.ameba.jp/ucs/reply/confirm
+// @match        https://msg.ameba.jp/pub/send/confirm
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=ameba.jp
+// @grant        none
+// ==/UserScript==
+
+
+
+let pathname=location.pathname;
+
+
+/* 受信箱ウインドウの場合 */
+if(pathname.includes('ucs/received/detail')){
+
+    let search=location.search;
+
+    /* 受信箱のメッセージ表示画面 */
+    if(!search.endsWith('&')){
+
+        let reply=document.querySelector('.sbmtOnImg input[value="返信する"]');
+        if(reply){
+
+            let newwin_h; // サブウインドウの高さ 340～800
+            let textarea=document.querySelector('#detlMain');
+            if(textarea){
+                textarea.innerHTML=textarea.innerHTML+'<span id="Anch"></span>';
+                let anch=document.querySelector('#Anch');
+                let h_pos=anch.getBoundingClientRect().top;
+                if(h_pos<420){
+                    newwin_h=340; }
+                else{
+                    if(h_pos<880){
+                        newwin_h=h_pos - 80; }
+                    else{
+                        newwin_h=800; }}}
+
+            let new_url='/ucs/received/detail'+ search+'&';
+
+            reply.addEventListener('mousedown', function(){
+                let newwin=open(
+                    new_url, '_blank', 'width=800, height='+ newwin_h +', left=10,top=80'); }); }}
+
+
+    /* 元メッセージを表示するサブウインドウ */
+    if(search.endsWith('&')){
+        let css=
+            '<style id="MA">'+
+            'html, body { background: #fff !important; overflow: hidden !important; }'+
+            '#ucsContent { margin: 0; width: 100% !important; border: none; }'+
+            '#ucsContent:before, #ucsContent:after { display: none; }'+
+            '#ucsMainLeft { margin: 0 !important; width: 100% !important; }'+
+            '.messageTable { margin: 0; border-bottom: 15px solid #00aaffd6 !important; }'+
+            'form .messageTable th:first-child { display: none; }'+
+            'form .messageTable tr:nth-child(2) { width: 100% !important; }'+
+            '#detlMain { width: 100% !important; height: calc(100vh - 105px) !important; '+
+            'resize: unset !important; }'+
+            '#globalHeader, #ucsHeader, #ucsMenu, #ucsMainLeft h1, #localNav, #msgActn, '+
+            '#ucsMainRight, #msgReport, .sbmtOnImg, .attentionB { display: none; }'+
+            '</style>';
+
+        if(!document.querySelector('#MA')){
+            document.body.insertAdjacentHTML('afterbegin', css); }} // スタイルを追加
+
+} // 受信箱ウインドウの場合
+
+
+
+
+/* 返信メッセージ編集画面 */
+if(pathname.includes('ucs/reply/index')){
+    let textarea=document.querySelector('#aEditorTextarea');
+    if(textarea){
+        textarea.value=''; }}
+
+
+
+
+/* 管理画面で返信メッセージを確認 */
+if(pathname.includes('ucs/reply/confirm')){
+
+    let detlMain=document.querySelector('#detlMain');
+    let uM_raw=document.querySelector('#ucsMainLeft input[name="messageBody"]');
+
+    if(detlMain && uM_raw){
+
+        let child_nodes=detlMain.childNodes;
+        for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+            if(child_nodes[k].tagName=="BR"){
+                child_nodes[k].remove(); }
+            else{
+                break; }}
+
+        uM_raw.value=detlMain.innerText; // 実際の送信内容を更新
+
+
+        let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+        if(!detlMain.querySelector('.end_p')){
+            detlMain.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+        detlMain.scrollTo(0, detlMain.scrollHeight); } // メッセージ末尾をスクロール表示
+
+
+    let sbmtOnImg=document.querySelector('.sbmtOnImg');
+    if(sbmtOnImg){
+        let disp=
+            '<span style="position: absolute; left: 0; font: bold 16px Meiryo; '+
+            'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+            'margin-left: 15px;">Check Message</span>';
+
+        if(!sbmtOnImg.querySelector('span')){
+            sbmtOnImg.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
+
+} // ucs/reply/confirm 管理画面で返信メッセージを確認
+
+
+
+
+/* 相手ページでメッセージを書く場合 */
+if(pathname.includes('pub/send/confirm')){
+
+    let messagePreview=document.querySelector('#messagePreview dd>div');
+    let cc_raw=document.querySelector('#confcontainer input[name="messageBody"]');
+
+    if(messagePreview && cc_raw){
+
+        let child_nodes=messagePreview.childNodes;
+        for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+            if(child_nodes[k].tagName=="BR"){
+                child_nodes[k].remove(); }
+            else{
+                break; }}
+
+        cc_raw.value=messagePreview.innerText; // 実際の送信内容を更新
+
+
+        let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+        if(!messagePreview.querySelector('.end_p')){
+            messagePreview.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+        setTimeout(()=>{
+            let message_scroll=document.querySelector('#messagePreview dd');
+            if(message_scroll){
+                message_scroll.scrollTo(0, message_scroll.scrollHeight); } // メッセージ末尾をスクロール表示
+        }, 1000); }
+
+
+
+    let confbtntwo=document.querySelector('#confbtntwo');
+    if(confbtntwo){
+        let disp=
+            '<span style="position: absolute; left: 20px; font: bold 16px Meiryo; '+
+            'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+            'margin-left: 15px;">Check Message</span>';
+
+        if(!confbtntwo.querySelector('span')){
+            confbtntwo.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
+
+} // pub/send/confirm  相手ページでメッセージを書く場合
