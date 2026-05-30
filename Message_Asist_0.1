@@ -1,0 +1,39 @@
+// ==UserScript==
+// @name         Message Asist
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  メッセージ送信確認画面のチェック補助
+// @author       Ameba Blog User
+// @match        https://msg.ameba.jp/ucs/reply/confirm
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=ameba.jp
+// @grant        none
+// ==/UserScript==
+
+
+let detlMain=document.querySelector('#detlMain');
+if(detlMain){
+
+    let child_nodes=detlMain.childNodes;
+    for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+        if(child_nodes[k].tagName=="BR"){
+            child_nodes[k].remove(); }
+        else{
+            break; }}
+
+
+    let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+    if(!detlMain.querySelector('.end_p')){
+        detlMain.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+    detlMain.scrollTo(0, detlMain.scrollHeight); } // メッセージ末尾をスクロール表示
+
+
+let sbmtOnImg=document.querySelector('.sbmtOnImg');
+if(sbmtOnImg){
+    let disp=
+        '<span style="position: absolute; left: 0; font: bold 16px Meiryo; '+
+        'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+        'margin-left: 15px;">Check Message</span>';
+
+    if(!sbmtOnImg.querySelector('span')){
+        sbmtOnImg.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
