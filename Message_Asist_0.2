@@ -1,0 +1,84 @@
+// ==UserScript==
+// @name         Message Asist
+// @namespace    http://tampermonkey.net/
+// @version      0.2
+// @description  メッセージ送信確認画面のチェック補助
+// @author       Ameba Blog User
+// @match        https://msg.ameba.jp/ucs/reply/confirm
+// @match        https://msg.ameba.jp/pub/send/confirm
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=ameba.jp
+// @grant        none
+// ==/UserScript==
+
+
+let detlMain=document.querySelector('#detlMain');
+let uM_raw=document.querySelector('#ucsMainLeft input[name="messageBody"]');
+
+if(detlMain && uM_raw){
+
+    let child_nodes=detlMain.childNodes;
+    for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+        if(child_nodes[k].tagName=="BR"){
+            child_nodes[k].remove(); }
+        else{
+            break; }}
+
+    uM_raw.value=detlMain.innerText; // 実際の送信内容を更新
+
+
+    let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+    if(!detlMain.querySelector('.end_p')){
+        detlMain.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+    detlMain.scrollTo(0, detlMain.scrollHeight); } // メッセージ末尾をスクロール表示
+
+
+let sbmtOnImg=document.querySelector('.sbmtOnImg');
+if(sbmtOnImg){
+    let disp=
+        '<span style="position: absolute; left: 0; font: bold 16px Meiryo; '+
+        'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+        'margin-left: 15px;">Check Message</span>';
+
+    if(!sbmtOnImg.querySelector('span')){
+        sbmtOnImg.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
+
+
+
+/* 相手ページでメッセージを書く場合 */
+
+let messagePreview=document.querySelector('#messagePreview dd>div');
+let cc_raw=document.querySelector('#confcontainer input[name="messageBody"]');
+
+if(messagePreview && cc_raw){
+
+    let child_nodes=messagePreview.childNodes;
+    for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+        if(child_nodes[k].tagName=="BR"){
+            child_nodes[k].remove(); }
+        else{
+            break; }}
+
+    cc_raw.value=messagePreview.innerText; // 実際の送信内容を更新
+
+
+    let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+    if(!messagePreview.querySelector('.end_p')){
+        messagePreview.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+    setTimeout(()=>{
+        let message_scroll=document.querySelector('#messagePreview dd');
+        if(message_scroll){
+            message_scroll.scrollTo(0, message_scroll.scrollHeight); } // メッセージ末尾をスクロール表示
+    }, 1000); }
+
+
+let confbtntwo=document.querySelector('#confbtntwo');
+if(confbtntwo){
+    let disp=
+        '<span style="position: absolute; left: 20px; font: bold 16px Meiryo; '+
+        'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+        'margin-left: 15px;">Check Message</span>';
+
+    if(!confbtntwo.querySelector('span')){
+        confbtntwo.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
