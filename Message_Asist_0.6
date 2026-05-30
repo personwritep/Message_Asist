@@ -1,0 +1,269 @@
+// ==UserScript==
+// @name         Message Asist
+// @namespace    http://tampermonkey.net/
+// @version      0.6
+// @description  メッセージ送信確認画面のチェック補助
+// @author       Ameba Blog User
+// @match        https://msg.ameba.jp/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=ameba.jp
+// @grant        none
+// ==/UserScript==
+
+
+
+let pathname=location.pathname;
+
+
+/* 受信箱　受信メッセージリストの場合 */
+if(document.querySelector('#sort')){
+
+    let sw=
+        '<input type="checkbox" id="mng_dep" name="md_All">'+
+        '<svg aria-hidden="true" width="18" height="10" viewBox="0 0 24 24" fill="#fff">'+
+        '<path d="M9.93 18.66c-.56 0-1.12-.19-1.58-.57l-4.8-3.93c-.64-.52-.74-1'+
+        '.47-.21-2.11.53-.64 1.47-.73 2.11-.21l4.45 3.64 9.04-9.04a1.49 1.49 0 0 1 '+
+        '2.12 0c.58.59.59 1.54 0 2.12l-9.36 9.36c-.49.49-1.12.74-1.77.74z">'+
+        '</path></svg>'+
+        '<label for="md_All">運営局</label>'+
+        '<style>#iconList { left: 415px !important; }</style>';
+
+    let sw_box=document.querySelector('#allSelect');
+    if(sw_box){
+        if(!document.querySelector('#mng_dep')){
+            sw_box.insertAdjacentHTML('beforeend', sw); }}
+
+
+    let checkboxAll=document.querySelector('#checkboxAll');
+    let mng_dep=document.querySelector('#mng_dep');
+    if(checkboxAll && mng_dep){
+        mng_dep.onclick=function(){
+            checkboxAll.checked=false;
+            if(mng_dep.checked==true){
+                check_do(1); }
+            else{
+                check_do(0); }}
+
+        checkboxAll.onmouseup=function(){
+            mng_dep.checked=false; }}
+
+
+    function check_do(n){
+        let tr=document.querySelectorAll('.tableList tr');
+        let count=0;
+        for(let k=1; k<tr.length; k++){
+            if(n==1){
+                let table_sw=tr[k].querySelector('.tableList-checkbox');
+                if(table_sw){
+                    let sender=tr[k].querySelector('.senderCell').textContent;
+                    if(sender.indexOf('運営局')!=-1){
+                        count+=1;
+                        table_sw.checked=true; }
+                    else{
+                        table_sw.checked=false; }}}
+            else{
+                let table_sw=tr[k].querySelector('.tableList-checkbox');
+                if(table_sw){
+                    table_sw.checked=false; }
+                count=0; }}
+
+        if(count==0){
+            able(0); }
+        else{
+            able(1); }}
+
+
+    function able(n){
+        let btnDelete=document.querySelector('.sbmtOnImg .btnDelete');
+        if(btnDelete){
+            if(n==0){
+                btnDelete.disabled=true; }
+            else{
+                btnDelete.disabled=false; }}}
+
+} // 受信箱　受信メッセージリストの場合
+
+
+
+
+/* 受信箱ウインドウの場合 */
+if(pathname.includes('ucs/received/detail')){
+
+    let search=location.search;
+
+    /* 受信箱のメッセージ表示画面 */
+    if(!search.endsWith('&')){
+
+        let css=
+            '<style id="MA">'+
+            'td#dupe { width: 799px; '+
+            'display: block; box-sizing: border-box; position: absolute; top: 0; '+
+            'padding: 10px 20px; line-height: 1.7; overflow-y: scroll; visibility: hidden; }'+
+            '#msgReport { position: absolute; bottom: 64px; right: 0; }'+
+            '#msgReport::before { content: "□ Shift+Click：等幅サブウインドウ表示"; '+
+            'position: relative; top: -20px; left: 228px; }'+
+            '.sbmtOnImg { position: relative; }'+
+            '</style>';
+
+        if(!document.querySelector('#MA')){
+            document.body.insertAdjacentHTML('afterbegin', css); } // スタイルを追加
+
+
+
+        let reply=document.querySelector('.sbmtOnImg input[value="返信する"]');
+        if(reply){
+
+            let newwin_h; // サブウインドウの高さ 310～810
+            let textarea=document.querySelector('#detlMain');
+            let new_url='/ucs/received/detail'+ search+'&';
+
+            if(textarea){
+                let dupe=textarea.cloneNode(true);
+                dupe.id='dupe';
+                textarea.parentNode.appendChild(dupe);
+
+                reply.onmousedown=function(e){
+                    if(e.shiftKey){
+                        dupe.style.width='799px';
+                        let h_pos=dupe.getBoundingClientRect().height;
+                        if(h_pos<200){
+                            newwin_h=310; }
+                        else{
+                            if(h_pos<700){
+                                newwin_h=h_pos + 110; }
+                            else{
+                                newwin_h=810; }}
+                        let newwin=open(
+                            new_url, '_blank', 'width=799, height='+ newwin_h +', left=10,top=80'); }
+                    else{
+                        dupe.style.width='600px';
+                        let h_pos=dupe.getBoundingClientRect().height;
+                        if(h_pos<200){
+                            newwin_h=310; }
+                        else{
+                            if(h_pos<700){
+                                newwin_h=h_pos + 110; }
+                            else{
+                                newwin_h=810; }}
+                        let newwin=open(
+                            new_url, '_blank', 'width=600, height='+ newwin_h +', left=10,top=80'); }}
+
+            }}} // 受信箱のメッセージ表示画面
+
+
+
+
+    /* 元メッセージを表示するサブウインドウ */
+    if(search.endsWith('&')){
+        let css=
+            '<style id="MA">'+
+            'html, body { background: #fff !important; overflow: hidden !important; }'+
+            '#ucsContent { margin: 0; width: 100% !important; border: none; }'+
+            '#ucsContent:before, #ucsContent:after { display: none; }'+
+            '#ucsMainLeft { margin: 0 !important; width: 100% !important; }'+
+            '.messageTable { margin: 0; border-bottom: 15px solid #00aaffd6 !important; }'+
+            'form .messageTable th:first-child { display: none; }'+
+            'form .messageTable tr:nth-child(2) { width: 100% !important; }'+
+            '#detlMain { width: 100% !important; height: calc(100vh - 105px) !important; '+
+            'resize: unset !important; }'+
+            '#globalHeader, #ucsHeader, #ucsMenu, #ucsMainLeft h1, #localNav, #msgActn, '+
+            '#ucsMainRight, #msgReport, .sbmtOnImg, .attentionB { display: none; }'+
+            '</style>';
+
+        if(!document.querySelector('#MA')){
+            document.body.insertAdjacentHTML('afterbegin', css); }} // スタイルを追加
+
+} // 受信箱ウインドウの場合
+
+
+
+
+/* 返信メッセージ編集画面 */
+if(pathname.includes('ucs/reply/index')){
+    let textarea=document.querySelector('#aEditorTextarea');
+    if(textarea){
+        textarea.value=''; }}
+
+
+
+
+/* 管理画面で返信メッセージを確認 */
+if(pathname.includes('ucs/reply/confirm')){
+
+    let detlMain=document.querySelector('#detlMain');
+    let uM_raw=document.querySelector('#ucsMainLeft input[name="messageBody"]');
+
+    if(detlMain && uM_raw){
+
+        let child_nodes=detlMain.childNodes;
+        for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+            if(child_nodes[k].tagName=="BR"){
+                child_nodes[k].remove(); }
+            else{
+                break; }}
+
+        uM_raw.value=detlMain.innerText; // 実際の送信内容を更新
+
+
+        let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+        if(!detlMain.querySelector('.end_p')){
+            detlMain.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+        detlMain.scrollTo(0, detlMain.scrollHeight); } // メッセージ末尾をスクロール表示
+
+
+    let sbmtOnImg=document.querySelector('.sbmtOnImg');
+    if(sbmtOnImg){
+        let disp=
+            '<span style="position: absolute; left: 0; font: bold 16px Meiryo; '+
+            'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+            'margin-left: 15px;">Check Message</span>';
+
+        if(!sbmtOnImg.querySelector('span')){
+            sbmtOnImg.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
+
+} // ucs/reply/confirm 管理画面で返信メッセージを確認
+
+
+
+
+/* 相手ページでメッセージを書く場合 */
+if(pathname.includes('pub/send/confirm')){
+
+    let messagePreview=document.querySelector('#messagePreview dd>div');
+    let cc_raw=document.querySelector('#confcontainer input[name="messageBody"]');
+
+    if(messagePreview && cc_raw){
+
+        let child_nodes=messagePreview.childNodes;
+        for(let k=child_nodes.length-1; k>=0; k--){ // 末尾まで連続するBRタグを削除
+            if(child_nodes[k].tagName=="BR"){
+                child_nodes[k].remove(); }
+            else{
+                break; }}
+
+        cc_raw.value=messagePreview.innerText; // 実際の送信内容を更新
+
+
+        let end_p='<p class="end_p" style="color: #2196f3">◀▶</p>';
+        if(!messagePreview.querySelector('.end_p')){
+            messagePreview.insertAdjacentHTML('beforeend', end_p); } // 末尾マークを表示
+
+        setTimeout(()=>{
+            let message_scroll=document.querySelector('#messagePreview dd');
+            if(message_scroll){
+                message_scroll.scrollTo(0, message_scroll.scrollHeight); } // メッセージ末尾をスクロール表示
+        }, 1000); }
+
+
+
+    let confbtntwo=document.querySelector('#confbtntwo');
+    if(confbtntwo){
+        let disp=
+            '<span style="position: absolute; left: 20px; font: bold 16px Meiryo; '+
+            'padding: 4px 15px 2px; border-radius: 5px; color: #fff; background: #f00; '+
+            'margin-left: 15px;">Check Message</span>';
+
+        if(!confbtntwo.querySelector('span')){
+            confbtntwo.insertAdjacentHTML('afterbegin', disp); }} // 動作の表示を追加
+
+} // pub/send/confirm  相手ページでメッセージを書く場合
